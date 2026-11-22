@@ -45,7 +45,7 @@ canvas.clear{opacity:0;pointer-events:none}
 .map{width:100%;max-width:320px;height:auto}
 #dots circle{opacity:0;transition:opacity .25s}
 .map .pin{opacity:0;transform-box:fill-box;transform-origin:center bottom}
-.map.go .pin{animation:pop .6s ease-out 2.8s forwards}
+.map.go .pin{animation:pop .6s ease-out 6.8s forwards}
 @keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
 section.dim{background:#eaf2ec;border-color:#c5d8cb}
 .venue{margin-top:6px}
@@ -74,7 +74,7 @@ footer{text-align:center;margin-top:30px}
     <div class="small">You’re invited to celebrate</div>
     <h1 class="serif">Amgad<i>&amp;</i>Rana</h1>
     <div class="rule"></div>
-    <div class="small">Their engagement</div>
+    <div class="small">Their engagement outing</div>
   </header>
 
   <section>
@@ -228,26 +228,38 @@ if(VENUE_MAP_URL){ $("dir").href = VENUE_MAP_URL; $("dir").hidden = false; }
   if(!m || !road || !g) return;
   var NS = "http://www.w3.org/2000/svg", L = road.getTotalLength(), n = Math.floor(L/9), dots = [], i;
   for(i=0;i<=n;i++){ var pt = road.getPointAtLength(L*i/n), c = document.createElementNS(NS,"circle"); c.setAttribute("cx",pt.x); c.setAttribute("cy",pt.y); c.setAttribute("r","1.8"); g.appendChild(c); dots.push(c); }
-  var started = false;
+  var raf = 0, timer = 0, running = false, D = 7000;
+  function reset(){
+    cancelAnimationFrame(raf); clearTimeout(timer); running = false;
+    m.classList.remove("go");
+    for(var j=0;j<dots.length;j++) dots[j].style.opacity = 0;
+  }
   function play(){
-    if(started) return; started = true; m.classList.add("go");
-    var t0 = performance.now(), D = 3000;
-    (function tick(now){
-      var p = Math.min(1,(now-t0)/D), k = Math.floor(p*dots.length), j;
-      for(j=0;j<k;j++) dots[j].style.opacity = 1;
-      if(p<1) requestAnimationFrame(tick); else for(j=0;j<dots.length;j++) dots[j].style.opacity = 1;
-    })(t0);
+    if(running) return; running = true;
+    timer = setTimeout(function(){
+      m.classList.add("go");
+      var t0 = performance.now();
+      (function tick(now){
+        var p = Math.min(1,(now-t0)/D), k = Math.ceil(p*dots.length), j;
+        for(j=0;j<k;j++) dots[j].style.opacity = 1;
+        if(p<1) raf = requestAnimationFrame(tick);
+      })(t0);
+    }, 800);
   }
   if("IntersectionObserver" in window){
-    new IntersectionObserver(function(es,io){ if(es[0].isIntersecting){ io.disconnect(); play(); } },{threshold:.5}).observe(m);
+    new IntersectionObserver(function(es){
+      var e = es[es.length-1];
+      if(e.isIntersecting && e.intersectionRatio >= .85) play();
+      else if(!e.isIntersecting) reset();
+    },{threshold:[0,.85]}).observe(m);
   } else play();
 })();
 
 function wa(msg){ return "https://wa.me/" + WA + "?text=" + encodeURIComponent(msg); }
 function upd(){
   var n = $("nm").value.trim() || "A guest";
-  $("yes").href = wa("Hi! This is " + n + ". I’ll be there for Amgad & Rana’s engagement on 18 December 🎉💍");
-  $("no").href = wa("Hi! This is " + n + ". Sadly I can’t make it to Amgad & Rana’s engagement, but I’m sending all my love 💚");
+  $("yes").href = wa("Hi! This is " + n + ". I’ll be there for your engagement on 18 December 🎉💍");
+  $("no").href = wa("Hi! This is " + n + ". Sadly I can’t make it to your engagement, but I’m sending all my love 💚");
 }
 $("nm").addEventListener("input", upd); upd();
 </script>
